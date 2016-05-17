@@ -8,20 +8,23 @@ else ifeq ($(OS), Darwin)
   CONDAURL := "https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh"
 endif
 
-run: miniconda
-	echo "hello"
+.PHONY: run sim
 
-sim :TUIO_Simulator
-	cd TUIO_Simulator; java -jar TuioSimulator.jar & 
+run: miniconda/lib/python2.7/site-packages/tuio
+	miniconda/bin/python inbetween.py
 
-miniconda:
+
+sim: TUIO_Simulator
+	cd TUIO_Simulator; java -jar TuioSimulator.jar &
+
+miniconda/bin/python:
 	curl $(CONDAURL) -o miniconda.sh
 	chmod a+x miniconda.sh
 	./miniconda.sh -b -p ./miniconda
 	rm miniconda.sh
 	miniconda/bin/conda install -y -c https://conda.anaconda.org/menpo opencv
 
-miniconda/lib/python2.7/site-packages/tuio:
+miniconda/lib/python2.7/site-packages/tuio: miniconda/bin/python
 	curl -O http://pytuio.googlecode.com/files/pytuio-0.1.tar.gz
 	miniconda/bin/pip install pytuio-0.1.tar.gz
 
