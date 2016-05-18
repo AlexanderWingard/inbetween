@@ -1,36 +1,31 @@
-# import tuio
-
-# tracking = tuio.Tracking()
-# try:
-#     while 1:
-#         tracking.update()
-#         for obj in tracking.objects():
-#             print obj
-# except KeyboardInterrupt:
-#         tracking.stop()
-
-
 import cv2
 import tuio
+import numpy as np
 tracking = tuio.Tracking()
-cap = cv2.VideoCapture('video.mov')
-# img = cv2.imread('tmp.png',0)
-# rows,cols = img.shape
-# cv2.namedWindow("test", cv2.WND_PROP_FULLSCREEN)
-# cv2.setWindowProperty("test", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+cap = cv2.VideoCapture('SAMPLE.AVI')
 
-
-rotation = 0
 while True:
     if cap.isOpened():
-        print "helloo"
-        ret, frame = cap.read()
-        img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        ret, img = cap.read()
+        if ret == 0:
+            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+            ret, img = cap.read()
+        rows,cols, _ = img.shape
         tracking.update()
+        tx = 0
+        ty = 0
+        rotation = 0
         for obj in tracking.objects():
             rotation = obj.angle
-        M = cv2.getRotationMatrix2D((cols/2,rows/2),rotation,1)
-        dst = cv2.warpAffine(img,M,(cols,rows))
+            tx = obj.xpos
+            ty = obj.ypos
+
+        rot_mat = cv2.getRotationMatrix2D((cols/2,rows/2),rotation,1)
+        rot_move = np.dot(rot_mat, np.array([tx* cols,ty * rows, 0]))
+        rot_mat[0,2] += rot_move[0]
+        rot_mat[1,2] += rot_move[1]
+
+        dst = cv2.warpAffine(img,rot_mat,(cols,rows))
 
         cv2.imshow('180_rotation', dst)
     key=cv2.waitKey(1)
