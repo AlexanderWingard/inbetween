@@ -2,11 +2,15 @@ import cv2
 import tuio
 import numpy as np
 tracking = tuio.Tracking()
-cap = cv2.VideoCapture('SAMPLE.AVI')
+cap = cv2.VideoCapture(0)
 
 while True:
     if cap.isOpened():
         ret, img = cap.read()
+        l_img = cv2.imread("bg.jpg")
+        newshape =  tuple(l_img.shape[1::-1])
+        img = cv2.resize(img, newshape)
+
         if ret == 0:
             cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
             ret, img = cap.read()
@@ -27,7 +31,11 @@ while True:
 
         dst = cv2.warpAffine(img,rot_mat,(cols,rows))
 
-        cv2.imshow('180_rotation', dst)
+        s_img = dst
+        x_offset=y_offset=0
+        l_img= cv2.add(l_img, dst)
+
+        cv2.imshow('180_rotation', l_img)
     key=cv2.waitKey(1)
     if key == 27:
         break
