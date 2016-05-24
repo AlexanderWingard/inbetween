@@ -2,7 +2,7 @@ import processing.video.*;
 import TUIO.*;
 Movie myMovie;
 TuioProcessing tuioClient;
-PImage bg;
+PImage bg, fid1, fid2;
 TuioObject[] objs = new TuioObject[3];
 
 void setup() {
@@ -10,17 +10,23 @@ void setup() {
   tuioClient  = new TuioProcessing(this);
   myMovie = new Movie(this, "example.mp4");
   bg = loadImage("bg.jpg");
+  fid1 = loadImage("1.png");
+  fid2 = loadImage("2.png");
+
   myMovie.loop();
   myMovie.volume(0);
 }
 
 void draw() {
-  background(0);
+  background(255);
   TuioObject upperLeft = objs[0];
   TuioObject lowerRight = objs[1];
   TuioObject imgPos = objs[2];
+  image(fid1, 0, 0);
+  image(fid2, width - fid2.width, height - fid2.height);
   if(upperLeft != null && lowerRight != null) {
     translate(upperLeft.getScreenX(width), upperLeft.getScreenY(height));
+    rotate(-upperLeft.getAngle());
     scale(lowerRight.getX()-upperLeft.getX());
     image(bg, 0, 0);
     if(imgPos != null) {
