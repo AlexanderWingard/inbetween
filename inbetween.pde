@@ -7,9 +7,9 @@ int[] calibrators = {77, 75};
 
 void setup() {
   //size(1280, 720/5, P2D);
-  //size(640, 360, P2D);
+  size(640, 360, P2D);
   //frameRate(30);
-  fullScreen(P2D, 2);
+  //fullScreen(P2D, 2);
   setupBackgrounds();
   setupTuio();
 }
@@ -86,6 +86,7 @@ float size = 430;
 float angle = 0;
 float x = 0;
 float y = 0;
+int fade = 255;
 void drawTuio() {
   int[] arr = corners;
   float rotationSum = 0;
@@ -95,6 +96,7 @@ void drawTuio() {
   int xyCount = 0;
   int sizeCount = 0;
   int rotationCount = 0;
+  fade = max(0, fade-8);
   for (int i = 0; i < arr.length; i++) {
     TuioObject from = objs[arr[i]];
     TuioObject to = objs[arr[(i+1) % arr.length]];
@@ -116,7 +118,7 @@ void drawTuio() {
     if (i < 2 && from != null && opposite != null) {
       xyCount++;
       xSum += from.getScreenX(width) + (opposite.getScreenX(width) - from.getScreenX(width))/2;
-      ySum += from.getScreenY(height) + (opposite.getScreenY(height) - from.getScreenY(height))/2;      
+      ySum += from.getScreenY(height) + (opposite.getScreenY(height) - from.getScreenY(height))/2;
     }
   }
 
@@ -124,22 +126,23 @@ void drawTuio() {
     angle = rotationSum / rotationCount;
   }
   if (sizeCount > 0) {
-       size = sizeSum / sizeCount + 40;
+    size = sizeSum / sizeCount + 40;
   }
-    if(xyCount > 0) {
-   x = xSum / xyCount;
-   y = ySum / xyCount;
+  if (xyCount > 0) {
+    fade = min(255, fade+16);
+    x = xSum / xyCount;
+    y = ySum / xyCount;
   }
-  
+
   //printDebug("X: " + x + " Y: " + y + ' ' + str(xyCount));
   //printDebug(str(degrees(angle)) + ' ' + str(rotationCount));
   //printDebug(str(round(size)) + ' ' + str(sizeCount));
-  if (onTheMove(corners)) {
+  if (onTheMove(corners) || (fade > 0  && fade < 255)) {
     mask.beginDraw();
     mask.background(0);
     mask.translate(x, y);        
     mask.rotate(angle);
-    mask.fill(255);
+    mask.fill(fade);
     mask.rect(-size/2, -size/2, size, size);
     mask.endDraw();
     maskedBg = bg.copy();
