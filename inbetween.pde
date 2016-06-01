@@ -8,7 +8,7 @@ int[] calibrators = {0, 1};
 
 void setup() {
   //size(1280, 720/5, P2D);
-  size(320, 180, P2D);
+  size(640, 360, P2D);
   //frameRate(30);
   //fullScreen(P2D);
   setupBackgrounds();
@@ -17,7 +17,7 @@ void setup() {
 
 void draw() {
   clearDebug();
-  //calibrateFOV();
+  calibrateFOV();
   drawBackgrounds();
   drawTuio();
   removeMissing();
@@ -45,7 +45,7 @@ void loopSides(int[] arr) {
     TuioObject from = objs[arr[i]];
     TuioObject to = objs[arr[(i+1) % arr.length]];
     if (from != null && to != null) {
-      printDebug(str(dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height))));
+      printDebug(str(dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height))) + " "  + str(from.getAngleDegrees()));
     }
   }
 }
@@ -82,27 +82,44 @@ void setupTuio() {
 PImage maskedBg;
 float frameScale  = 1.0;
 void drawTuio() {
-  int size = 430;
-  TuioObject imgUL = objs[11];
-  TuioObject imgUR = objs[12];
-  if (imgUL == null) {
-    return;
-  }
-  if (onTheMove(corners)) {
-    if (imgUR != null) {
-      frameScale =  dist(imgUL.getScreenX(width), imgUL.getScreenY(height), imgUR.getScreenX(width), imgUR.getScreenY(height)) / size;
+  int[] arr = corners;
+  float size = 430;
+  float angle = 0;
+  float x = 0;
+  float y = 0;
+  for (int i = 0; i < arr.length; i++) {
+    TuioObject from = objs[arr[i]];
+    TuioObject to = objs[arr[(i+1) % arr.length]];
+    if (from != null && to != null) {
+      size = dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height));
+      angle = from.getAngle();
     }
+    if (from != null) {
+      x = from.getScreenX(width);
+      y = from.getScreenY(height);
+      if (arr[i] == arr[1] || arr[i] == arr[2]) {
+        x = x - size;
+      }
+      if (arr[i] == arr[2] || arr[i] == arr[3]) {
+        y = y - size;
+      }
+    }
+  }
+
+  if (onTheMove(corners)) {
     mask.beginDraw();
     mask.background(0);
-    mask.translate(imgUL.getScreenX(width), imgUL.getScreenY(height));
-    mask.rotate(imgUL.getAngle());
+    mask.translate(x, y);
+    mask.rotate(angle);
     mask.fill(255);
-    mask.rect(0, 0, size * frameScale, size * frameScale);
+    mask.rect(0, 0, size, size);
     mask.endDraw();
     maskedBg = bg.copy();
     maskedBg.mask(mask);
   }
-  image(maskedBg, 0, 0);
+  if (maskedBg != null) {
+    image(maskedBg, 0, 0);
+  }
 }
 
 boolean onTheMove(int[] cor) {
