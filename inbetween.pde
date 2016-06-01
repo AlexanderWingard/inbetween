@@ -7,9 +7,9 @@ int[] calibrators = {77, 75};
 
 void setup() {
   //size(1280, 720/5, P2D);
-  size(640, 360, P2D);
+  //size(640, 360, P2D);
   //frameRate(30);
-  //fullScreen(P2D, 2);
+  fullScreen(P2D, 2);
   setupBackgrounds();
   setupTuio();
 }
@@ -96,7 +96,7 @@ void drawTuio() {
   int xyCount = 0;
   int sizeCount = 0;
   int rotationCount = 0;
-  fade = max(0, fade-8);
+  fade = max(0, fade-32);
   for (int i = 0; i < arr.length; i++) {
     TuioObject from = objs[arr[i]];
     TuioObject to = objs[arr[(i+1) % arr.length]];
@@ -129,7 +129,7 @@ void drawTuio() {
     size = sizeSum / sizeCount + 40;
   }
   if (xyCount > 0) {
-    fade = min(255, fade+16);
+    fade = 255;
     x = xSum / xyCount;
     y = ySum / xyCount;
   }
