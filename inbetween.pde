@@ -1,28 +1,28 @@
 import processing.video.*;
 import TUIO.*;
 
-
 TuioObject[] objs = new TuioObject[256];
-int[] corners = {8, 9, 10, 11};
-int[] calibrators = {0, 1};
+int[] corners = {2, 0, 1, 3};
+int[] calibrators = {77, 75};
 
 void setup() {
   //size(1280, 720/5, P2D);
-  size(640, 360, P2D);
+  //size(640, 360, P2D);
   //frameRate(30);
-  //fullScreen(P2D);
+  fullScreen(P2D, 2);
   setupBackgrounds();
   setupTuio();
 }
 
 void draw() {
   clearDebug();
-  calibrateFOV();
   drawBackgrounds();
   drawTuio();
   removeMissing();
-  loopSides(corners);
-  printDebug("FPS: " + str(round(frameRate)));
+  //  loopSides(corners);
+  //printDebug("FPS: " + str(round(frameRate)));
+  //calibrateFOV();
+
   drawDebug();
 }
 String dbg = "";
@@ -36,7 +36,7 @@ void printDebug(String text) {
 
 void drawDebug() {
   fill(255, 0, 0);
-  textSize(height/10);
+  textSize(30);
   text(dbg, 0, 0);
 }
 
@@ -45,7 +45,7 @@ void loopSides(int[] arr) {
     TuioObject from = objs[arr[i]];
     TuioObject to = objs[arr[(i+1) % arr.length]];
     if (from != null && to != null) {
-      printDebug(str(dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height))) + " "  + str(from.getAngleDegrees()));
+      //printDebug(str(dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height))) + " "  + str(from.getAngleDegrees()));
     }
   }
 }
@@ -64,13 +64,14 @@ void movieEvent(Movie m) {
 // === Calibrate
 
 void calibrateFOV() {
-  if (objs[calibrators[0]] == null || objs[calibrators[1]] == null) {
-    return;
-  }
   background(255);
-  translate(objs[calibrators[0]].getScreenX(width), objs[calibrators[0]].getScreenY(height));
-  scale(objs[calibrators[1]].getX() - objs[calibrators[0]].getX());
-  rotate(-objs[calibrators[0]].getAngle());
+  rect(width /2 -5, height /2 -5, 10, 10);
+  rect(0, 0, 10, 10);
+  rect(width - 10, height - 10, 10, 10);
+  // objs[calibrators[1]].getScreenX(width) - objs[calibrators[0]].getScreenX(width),
+  //objs[calibrators[1]].getScreenY(height) - objs[calibrators[0]].getScreenY(height));
+  //scale(objs[calibrators[1]].getX() - objs[calibrators[0]].getX());
+  //rotate(-objs[calibrators[0]].getAngle());
 }
 
 // === Tuio
@@ -81,44 +82,74 @@ void setupTuio() {
 
 PImage maskedBg;
 float frameScale  = 1.0;
+float size = 430;
+float angle = 0;
+float x = 0;
+float y = 0;
 void drawTuio() {
   int[] arr = corners;
-  float size = 430;
-  float angle = 0;
-  float x = 0;
-  float y = 0;
+  float rotationSum = 0;
+  float sizeSum = 0;
+  float xSum = 0;
+  float ySum = 0;
+  int foundCount = 0;
+   int oppositeCount = 0;
   for (int i = 0; i < arr.length; i++) {
     TuioObject from = objs[arr[i]];
     TuioObject to = objs[arr[(i+1) % arr.length]];
+    TuioObject opposite = objs[arr[(i+2) % arr.length]];
+
     if (from != null && to != null) {
-      size = dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height));
-      angle = from.getAngle();
+      PVector vec =  new PVector(to.getScreenX(width) - from.getScreenX(width), to.getScreenY(height) - from.getScreenY(height));
+      vec.rotate(PI/2);
+      sizeSum += dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height));
+      oppositeCount++;
+      //x = from.getScreenX(width) +vec.x;
+      //y  = from.getScreenY(height) + vec.y;
+      xSum += from.getScreenX(width) + ((to.getScreenX(width) +vec.x) - from.getScreenX(width))/2;
+      ySum += from.getScreenY(height) + ((to.getScreenY(height) + vec.y) - from.getScreenY(height))/2;
+
+      //printDebug(str(i));
     }
     if (from != null) {
-      x = from.getScreenX(width);
-      y = from.getScreenY(height);
-      if (arr[i] == arr[1] || arr[i] == arr[2]) {
-        x = x - size;
-      }
-      if (arr[i] == arr[2] || arr[i] == arr[3]) {
-        y = y - size;
-      }
+      rotationSum = rotationSum + from.getAngle();
+      foundCount++;
     }
+    if (i < 2 && from != null && opposite != null) {
+      oppositeCount++;
+      xSum += from.getScreenX(width) + (opposite.getScreenX(width) - from.getScreenX(width))/2;
+      ySum += from.getScreenY(height) + (opposite.getScreenY(height) - from.getScreenY(height))/2;      
+    }
+  }
+
+  if (foundCount > 0) {
+    angle = rotationSum / foundCount;
+    size = sizeSum / foundCount;
+  }
+  
+  printDebug(str(oppositeCount));
+  
+  if(oppositeCount > 0) {
+   x = xSum / oppositeCount;
+   y = ySum / oppositeCount;
   }
 
   if (onTheMove(corners)) {
     mask.beginDraw();
     mask.background(0);
-    mask.translate(x, y);
+      fill(255,0,0);
+      rect(x-5, y - 5, 10, 10);
+    //  mask.translate(ul.getScreenX(width), ul.getScreenY(height));
     mask.rotate(angle);
+    mask.translate(size/2, size/2);
     mask.fill(255);
-    mask.rect(0, 0, size, size);
+    mask.rect(-size/2, -size/2, size, size);
     mask.endDraw();
     maskedBg = bg.copy();
     maskedBg.mask(mask);
   }
   if (maskedBg != null) {
-    image(maskedBg, 0, 0);
+    //image(maskedBg, 0, 0);
   }
 }
 
@@ -159,7 +190,9 @@ void setupBackgrounds() {
 }
 
 void drawBackgrounds() {
-  image(mv, 0, 0, width, height);
+  //image(mv, 0, 0, width, height);
+  fill(255);
+  rect(0, 0, width, height);
 }
 
 // === Corners
