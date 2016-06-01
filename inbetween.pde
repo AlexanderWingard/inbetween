@@ -92,8 +92,9 @@ void drawTuio() {
   float sizeSum = 0;
   float xSum = 0;
   float ySum = 0;
-  int foundCount = 0;
-   int oppositeCount = 0;
+  int xyCount = 0;
+  int sizeCount = 0;
+  int rotationCount = 0;
   for (int i = 0; i < arr.length; i++) {
     TuioObject from = objs[arr[i]];
     TuioObject to = objs[arr[(i+1) % arr.length]];
@@ -103,45 +104,45 @@ void drawTuio() {
       PVector vec =  new PVector(to.getScreenX(width) - from.getScreenX(width), to.getScreenY(height) - from.getScreenY(height));
       vec.rotate(PI/2);
       sizeSum += dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height));
-      oppositeCount++;
-      //x = from.getScreenX(width) +vec.x;
-      //y  = from.getScreenY(height) + vec.y;
+      sizeCount++;
+      xyCount++;
       xSum += from.getScreenX(width) + ((to.getScreenX(width) +vec.x) - from.getScreenX(width))/2;
       ySum += from.getScreenY(height) + ((to.getScreenY(height) + vec.y) - from.getScreenY(height))/2;
-
-      //printDebug(str(i));
     }
     if (from != null) {
       rotationSum = rotationSum + from.getAngle();
-      foundCount++;
+      rotationCount++;
     }
     if (i < 2 && from != null && opposite != null) {
-      oppositeCount++;
+      xyCount++;
       xSum += from.getScreenX(width) + (opposite.getScreenX(width) - from.getScreenX(width))/2;
       ySum += from.getScreenY(height) + (opposite.getScreenY(height) - from.getScreenY(height))/2;      
     }
   }
 
-  if (foundCount > 0) {
-    angle = rotationSum / foundCount;
-    size = sizeSum / foundCount;
+  if (rotationCount > 0) {
+    angle = rotationSum / rotationCount;
+  }
+  if (sizeCount > 0) {
+       size = sizeSum / sizeCount; 
+  }
+    if(xyCount > 0) {
+   x = xSum / xyCount;
+   y = ySum / xyCount;
   }
   
-  printDebug(str(oppositeCount));
-  
-  if(oppositeCount > 0) {
-   x = xSum / oppositeCount;
-   y = ySum / oppositeCount;
-  }
+  printDebug("X: " + x + " Y: " + y);
+  printDebug(str(degrees(angle)));
+  printDebug(str(round(size)));
+  printDebug(str(rotationCount));
 
   if (onTheMove(corners)) {
     mask.beginDraw();
     mask.background(0);
-      fill(255,0,0);
-      rect(x-5, y - 5, 10, 10);
-    //  mask.translate(ul.getScreenX(width), ul.getScreenY(height));
+
+    //mask.translate(x, y);
     mask.rotate(angle);
-    mask.translate(size/2, size/2);
+    //mask.translate(size/2, size/2);
     mask.fill(255);
     mask.rect(-size/2, -size/2, size, size);
     mask.endDraw();
@@ -149,7 +150,7 @@ void drawTuio() {
     maskedBg.mask(mask);
   }
   if (maskedBg != null) {
-    //image(maskedBg, 0, 0);
+    image(maskedBg, 0, 0);
   }
 }
 
