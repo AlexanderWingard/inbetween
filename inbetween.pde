@@ -3,11 +3,12 @@ import TUIO.*;
 
 
 TuioObject[] objs = new TuioObject[256];
-int[] corners = {11, 12, 13, 14};
-int[] calibrators = {0,1};
+int[] corners = {8, 9, 10, 11};
+int[] calibrators = {0, 1};
 
 void setup() {
-  size(1280, 720, P2D);
+  //size(1280, 720/5, P2D);
+  size(320, 180, P2D);
   //frameRate(30);
   //fullScreen(P2D);
   setupBackgrounds();
@@ -15,17 +16,38 @@ void setup() {
 }
 
 void draw() {
+  clearDebug();
   //calibrateFOV();
   drawBackgrounds();
   drawTuio();
   removeMissing();
-  printDebug(str(round(frameRate)));
+  loopSides(corners);
+  printDebug("FPS: " + str(round(frameRate)));
+  drawDebug();
+}
+String dbg = "";
+void clearDebug() {
+  dbg = "";
 }
 
 void printDebug(String text) {
+  dbg += "\n" + text;
+}
+
+void drawDebug() {
   fill(255, 0, 0);
-  textSize(30);
-  text(text, 20, 30);
+  textSize(height/10);
+  text(dbg, 0, 0);
+}
+
+void loopSides(int[] arr) {
+  for (int i = 0; i < arr.length; i++) {
+    TuioObject from = objs[arr[i]];
+    TuioObject to = objs[arr[(i+1) % arr.length]];
+    if (from != null && to != null) {
+      printDebug(str(dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height))));
+    }
+  }
 }
 
 void updateTuioObject(TuioObject tobj) {
@@ -42,9 +64,9 @@ void movieEvent(Movie m) {
 // === Calibrate
 
 void calibrateFOV() {
-    if(objs[calibrators[0]] == null || objs[calibrators[1]] == null) {
-       return; 
-    }
+  if (objs[calibrators[0]] == null || objs[calibrators[1]] == null) {
+    return;
+  }
   background(255);
   translate(objs[calibrators[0]].getScreenX(width), objs[calibrators[0]].getScreenY(height));
   scale(objs[calibrators[1]].getX() - objs[calibrators[0]].getX());
@@ -67,8 +89,8 @@ void drawTuio() {
     return;
   }
   if (onTheMove(corners)) {
-    if(imgUR != null) {
-     frameScale =  dist(imgUL.getScreenX(width), imgUL.getScreenY(height), imgUR.getScreenX(width), imgUR.getScreenY(height)) / size;
+    if (imgUR != null) {
+      frameScale =  dist(imgUL.getScreenX(width), imgUL.getScreenY(height), imgUR.getScreenX(width), imgUR.getScreenY(height)) / size;
     }
     mask.beginDraw();
     mask.background(0);
@@ -84,25 +106,25 @@ void drawTuio() {
 }
 
 boolean onTheMove(int[] cor) {
-  for(int i = 0; i < cor.length; i++) {
+  for (int i = 0; i < cor.length; i++) {
     TuioObject obj = objs[cor[i]];
-     if(obj != null && (obj.isMoving() || obj.getRotationSpeed() != 0)) {
-       return true;
-     }
+    if (obj != null && (obj.isMoving() || obj.getRotationSpeed() != 0)) {
+      return true;
+    }
   }
   return false;
 }
 
 long secondsSinceUpdate(TuioObject obj) {
-   return TuioTime.getSessionTime().subtract(obj.getTuioTime()).getSeconds();
+  return TuioTime.getSessionTime().subtract(obj.getTuioTime()).getSeconds();
 }
 
 void removeMissing() {
-    for(int i = 0; i < objs.length; i++) {
-       if(objs[i] != null && objs[i].getTuioState() == TuioObject.TUIO_REMOVED && secondsSinceUpdate(objs[i]) > 0) {
-         objs[i] = null;
-       }
+  for (int i = 0; i < objs.length; i++) {
+    if (objs[i] != null && objs[i].getTuioState() == TuioObject.TUIO_REMOVED && secondsSinceUpdate(objs[i]) > 0) {
+      objs[i] = null;
     }
+  }
 }
 
 // === Backgrounds
