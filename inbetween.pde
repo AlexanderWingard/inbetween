@@ -124,25 +124,21 @@ void drawTuio() {
     angle = rotationSum / rotationCount;
   }
   if (sizeCount > 0) {
-       size = sizeSum / sizeCount; 
+       size = sizeSum / sizeCount + 40;
   }
     if(xyCount > 0) {
    x = xSum / xyCount;
    y = ySum / xyCount;
   }
   
-  printDebug("X: " + x + " Y: " + y);
-  printDebug(str(degrees(angle)));
-  printDebug(str(round(size)));
-  printDebug(str(rotationCount));
-
+  //printDebug("X: " + x + " Y: " + y + ' ' + str(xyCount));
+  //printDebug(str(degrees(angle)) + ' ' + str(rotationCount));
+  //printDebug(str(round(size)) + ' ' + str(sizeCount));
   if (onTheMove(corners)) {
     mask.beginDraw();
     mask.background(0);
-
-    //mask.translate(x, y);
+    mask.translate(x, y);        
     mask.rotate(angle);
-    //mask.translate(size/2, size/2);
     mask.fill(255);
     mask.rect(-size/2, -size/2, size, size);
     mask.endDraw();
@@ -191,9 +187,9 @@ void setupBackgrounds() {
 }
 
 void drawBackgrounds() {
-  //image(mv, 0, 0, width, height);
-  fill(255);
-  rect(0, 0, width, height);
+  image(mv, 0, 0, width, height);
+  //fill(255);
+  //rect(0, 0, width, height);
 }
 
 // === Corners
