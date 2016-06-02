@@ -3,13 +3,13 @@ import TUIO.*;
 
 TuioObject[] objs = new TuioObject[256];
 int[] corners = {2, 0, 1, 3};
-int[] calibrators = {77, 75};
+final boolean DEBUG = true;
+final boolean BACKGROUND = true;
+final int REMOVE_TIME_MS = 200;
 
 void setup() {
-  //size(1280, 720/5, P2D);
-  //size(640, 360, P2D);
-  //frameRate(30);
   fullScreen(P2D, 2);
+  //size(640, 360, P2D);
   setupBackgrounds();
   setupTuio();
 }
@@ -19,34 +19,27 @@ void draw() {
   drawBackgrounds();
   drawTuio();
   removeMissing();
-  //  loopSides(corners);
-  //printDebug("FPS: " + str(round(frameRate)));
-  //calibrateFOV();
-
+  printDebug("FPS: " + str(round(frameRate)));
   drawDebug();
 }
 String dbg = "";
 void clearDebug() {
-  dbg = "";
+  if (DEBUG) {
+    dbg = "";
+  }
 }
 
 void printDebug(String text) {
-  dbg += "\n" + text;
+  if (DEBUG) {
+    dbg += "\n" + text;
+  }
 }
 
 void drawDebug() {
-  fill(255, 0, 0);
-  textSize(30);
-  text(dbg, 0, 0);
-}
-
-void loopSides(int[] arr) {
-  for (int i = 0; i < arr.length; i++) {
-    TuioObject from = objs[arr[i]];
-    TuioObject to = objs[arr[(i+1) % arr.length]];
-    if (from != null && to != null) {
-      //printDebug(str(dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height))) + " "  + str(from.getAngleDegrees()));
-    }
+  if (DEBUG) {
+    fill(255, 0, 0);
+    textSize(30);
+    text(dbg, 0, 0);
   }
 }
 
@@ -59,19 +52,6 @@ void updateTuioObject(TuioObject tobj) {
 
 void movieEvent(Movie m) {
   m.read();
-}
-
-// === Calibrate
-
-void calibrateFOV() {
-  background(255);
-  rect(width /2 -5, height /2 -5, 10, 10);
-  rect(0, 0, 10, 10);
-  rect(width - 10, height - 10, 10, 10);
-  // objs[calibrators[1]].getScreenX(width) - objs[calibrators[0]].getScreenX(width),
-  //objs[calibrators[1]].getScreenY(height) - objs[calibrators[0]].getScreenY(height));
-  //scale(objs[calibrators[1]].getX() - objs[calibrators[0]].getX());
-  //rotate(-objs[calibrators[0]].getAngle());
 }
 
 // === Tuio
@@ -106,19 +86,19 @@ void drawTuio() {
       PVector vec =  new PVector(to.getScreenX(width) - from.getScreenX(width), to.getScreenY(height) - from.getScreenY(height));
       vec.rotate(PI/2);
       sizeSum += dist(from.getScreenX(width), from.getScreenY(height), to.getScreenX(width), to.getScreenY(height));
-      sizeCount++;
-      xyCount++;
       xSum += from.getScreenX(width) + ((to.getScreenX(width) +vec.x) - from.getScreenX(width))/2;
       ySum += from.getScreenY(height) + ((to.getScreenY(height) + vec.y) - from.getScreenY(height))/2;
+      sizeCount++;
+      xyCount++;
     }
     if (from != null) {
       rotationSum = rotationSum + from.getAngle();
       rotationCount++;
     }
     if (i < 2 && from != null && opposite != null) {
-      xyCount++;
       xSum += from.getScreenX(width) + (opposite.getScreenX(width) - from.getScreenX(width))/2;
       ySum += from.getScreenY(height) + (opposite.getScreenY(height) - from.getScreenY(height))/2;
+      xyCount++;
     }
   }
 
@@ -134,9 +114,6 @@ void drawTuio() {
     y = ySum / xyCount;
   }
 
-  //printDebug("X: " + x + " Y: " + y + ' ' + str(xyCount));
-  //printDebug(str(degrees(angle)) + ' ' + str(rotationCount));
-  //printDebug(str(round(size)) + ' ' + str(sizeCount));
   if (onTheMove(corners) || (fade > 0  && fade < 255)) {
     mask.beginDraw();
     mask.background(0);
@@ -151,6 +128,12 @@ void drawTuio() {
   if (maskedBg != null) {
     image(maskedBg, 0, 0);
   }
+
+  if (DEBUG) {
+    printDebug("X: " + x + " Y: " + y + ' ' + str(xyCount));
+    printDebug(str(degrees(angle)) + ' ' + str(rotationCount));
+    printDebug(str(round(size)) + ' ' + str(sizeCount));
+  }
 }
 
 boolean onTheMove(int[] cor) {
@@ -163,13 +146,13 @@ boolean onTheMove(int[] cor) {
   return false;
 }
 
-long secondsSinceUpdate(TuioObject obj) {
-  return TuioTime.getSessionTime().subtract(obj.getTuioTime()).getSeconds();
+long millisSinceUpdate(TuioObject obj) {
+  return TuioTime.getSessionTime().subtract(obj.getTuioTime()).getTotalMilliseconds();
 }
 
 void removeMissing() {
   for (int i = 0; i < objs.length; i++) {
-    if (objs[i] != null && objs[i].getTuioState() == TuioObject.TUIO_REMOVED && secondsSinceUpdate(objs[i]) > 0) {
+    if (objs[i] != null && objs[i].getTuioState() == TuioObject.TUIO_REMOVED && millisSinceUpdate(objs[i]) > REMOVE_TIME_MS) {
       objs[i] = null;
     }
   }
@@ -181,30 +164,21 @@ PImage bg;
 PGraphics mask;
 float scale = 1.0;
 void setupBackgrounds() {
-  mv = new Movie(this, "example.mp4");
-  mv.loop();
-  mv.volume(0);
+  if (BACKGROUND) {
+    mv = new Movie(this, "example.mp4");
+    mv.loop();
+    mv.volume(0);
+  }
   bg = loadImage("bg.jpeg");
   bg.resize(width, height);
   mask = createGraphics(width, height);
 }
 
 void drawBackgrounds() {
-  image(mv, 0, 0, width, height);
-  //fill(255);
-  //rect(0, 0, width, height);
-}
-
-// === Corners
-PImage fid1, fid2;
-void setupCorners() {
-  fid1 = loadImage("1.png");
-  fid2 = loadImage("2.png");
-  fid1.resize(30, 30);
-  fid2.resize(30, 30);
-}
-
-void drawCorners() {
-  image(fid1, 0, 0);
-  image(fid2, width - fid2.width, height - fid2.height);
+  if (BACKGROUND) {
+    image(mv, 0, 0, width, height);
+  } else {
+    fill(255);
+    rect(0, 0, width, height);
+  }
 }
