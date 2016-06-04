@@ -1,7 +1,12 @@
 import processing.video.*;
 import TUIO.*;
 import processing.net.*;
+import oscP5.*;
+import netP5.*;
 
+OscP5 oscP5;
+NetAddress myRemoteLocation;
+final boolean OSC = true;
 
 Server myServer;
 TuioObject[] objs = new TuioObject[256];
@@ -12,7 +17,9 @@ final int REMOVE_TIME_MS = 200;
 
 void setup() {
   // Starts a myServer on port 5204
-  myServer = new Server(this, 5204); 
+  myServer = new Server(this, 5204);
+  oscP5 = new OscP5(this,12000);
+  myRemoteLocation = new NetAddress("83.227.188.132",2016);
   fullScreen(P2D, 2);
   //size(640, 360, P2D);
   setupBackgrounds();
@@ -133,7 +140,17 @@ void drawTuio() {
   if (maskedBg != null) {
     image(maskedBg, 0, 0);
   }
+  if (OSC) {
+    OscMessage myMessage = new OscMessage("/inbetween");
+  
+    myMessage.add(x); 
+    myMessage.add(y); 
+    myMessage.add(angle);
+    myMessage.add(size);
 
+    /* send the message */
+    oscP5.send(myMessage, myRemoteLocation); 
+  }
   if (DEBUG) {
     printDebug("X: " + x + " Y: " + y + ' ' + str(xyCount));
     printDebug(str(degrees(angle)) + ' ' + str(rotationCount));
