@@ -1,6 +1,9 @@
 import processing.video.*;
 import TUIO.*;
+import processing.net.*;
 
+
+Server myServer;
 TuioObject[] objs = new TuioObject[256];
 int[] corners = {2, 0, 1, 3};
 final boolean DEBUG = true;
@@ -8,6 +11,8 @@ final boolean BACKGROUND = true;
 final int REMOVE_TIME_MS = 200;
 
 void setup() {
+  // Starts a myServer on port 5204
+  myServer = new Server(this, 5204); 
   fullScreen(P2D, 2);
   //size(640, 360, P2D);
   setupBackgrounds();
